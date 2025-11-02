@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Config git voor commits
+      # 2️⃣ Setup Git
       - name: Setup Git
         run: |
           git config user.name "GitHub Actions Bot"
@@ -37,9 +37,23 @@ jobs:
         run: |
           git rm "${{ steps.pick.outputs.file }}"
 
-      # 6️⃣ Commit en push
-      - name: Commit and Push
+      # 6️⃣ Update index.html
+      - name: Update index.html
         run: |
-          git add live-stories/
+          # Maak tijdelijke links
+          LINKS=""
+          for f in live-stories/*.html; do
+            NAME=$(basename "$f" .html)
+            LINKS="$LINKS  <li><a href=\"$f\">$NAME</a></li>\n"
+          done
+
+          # Vervang content tussen <!-- workflow start --> en <!-- workflow end -->
+          sed -i '/<!-- workflow start -->/,/<!-- workflow end -->/c\
+<!-- workflow start -->\n'"$LINKS"'<!-- workflow end -->' index.html
+
+      # 7️⃣ Commit & push
+      - name: Commit & Push
+        run: |
+          git add live-stories/ index.html
           git commit -m "Auto publish random story: $(basename ${{ steps.pick.outputs.file }})"
           git push origin main
