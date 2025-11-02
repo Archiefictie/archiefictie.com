@@ -1,0 +1,39 @@
+name: Weekly Auto Publish
+
+on:
+  schedule:
+    # elke dinsdag om 11:00 CET
+    - cron: '0 10 * * 2'
+  workflow_dispatch: # handmatige trigger
+
+jobs:
+  publish-story:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Pick random story
+        run: |
+          mkdir -p live-stories
+          FILE=$(ls pool/*.html | shuf -n 1)
+          cp "$FILE" live-stories/
+          STORYNAME=$(basename "$FILE")
+          echo "Selected story: $STORYNAME"
+          # add link to index.html at top of list
+          sed -i "0,/<ul>/s|<ul>|<ul>\n  <li><a href=\"live-stories/$STORYNAME\">$STORYNAME</a></li>|" index.html
+          # remove story from pool
+          rm "$FILE"
+
+      - name: Commit & push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add index.html live-stories/
+          git commit -m "Auto publish random story $(date +'%Y-%m-%d')"
+          git push
