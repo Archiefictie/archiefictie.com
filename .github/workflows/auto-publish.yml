@@ -37,21 +37,27 @@ jobs:
         run: |
           git rm "${{ steps.pick.outputs.file }}"
 
-      # 6️⃣ Update index.html
+      # 6️⃣ Update index.html (YAML-safe)
       - name: Update index.html
         run: |
-          # Maak tijdelijke links
-          LINKS=""
+          # Maak tijdelijke lijst van links
+          echo "" > tmp_links.html
           for f in live-stories/*.html; do
             NAME=$(basename "$f" .html)
-            LINKS="$LINKS  <li><a href=\"$f\">$NAME</a></li>\n"
+            echo "  <li><a href=\"$f\">$NAME</a></li>" >> tmp_links.html
           done
 
-          # Vervang content tussen <!-- workflow start --> en <!-- workflow end -->
-          sed -i '/<!-- workflow start -->/,/<!-- workflow end -->/c\
-<!-- workflow start -->\n'"$LINKS"'<!-- workflow end -->' index.html
+          # Vervang content tussen workflow comments
+          awk '
+            /<!-- workflow start -->/{print; system("cat tmp_links.html"); next}
+            /<!-- workflow end -->/{print; next}
+            !/<!-- workflow start -->/ && !/<!-- workflow end -->/ {print}
+          ' index.html > index_new.html
 
-      # 7️⃣ Commit & push
+          mv index_new.html index.html
+          rm tmp_links.html
+
+      # 7️⃣ Commit & Push
       - name: Commit & Push
         run: |
           git add live-stories/ index.html
