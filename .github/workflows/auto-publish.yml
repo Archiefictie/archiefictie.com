@@ -1,39 +1,45 @@
-name: Weekly Auto Publish
+name: Auto Publish Random Story
 
 on:
+  workflow_dispatch:       # handmatige trigger
   schedule:
-    # elke dinsdag om 11:00 CET
-    - cron: '0 10 * * 2'
-  workflow_dispatch: # handmatige trigger
+    - cron: '0 10 * * 2'  # elke dinsdag om 11:00 CET
 
 jobs:
-  publish-story:
+  publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Pick random story
-        run: |
-          mkdir -p live-stories
-          FILE=$(ls pool/*.html | shuf -n 1)
-          cp "$FILE" live-stories/
-          STORYNAME=$(basename "$FILE")
-          echo "Selected story: $STORYNAME"
-          # add link to index.html at top of list
-          sed -i "0,/<ul>/s|<ul>|<ul>\n  <li><a href=\"live-stories/$STORYNAME\">$STORYNAME</a></li>|" index.html
-          # remove story from pool
-          rm "$FILE"
-
-      - name: Commit & push changes
+      # 2️⃣ Config git voor commits
+      - name: Setup Git
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add index.html live-stories/
-          git commit -m "Auto publish random story $(date +'%Y-%m-%d')"
-          git push
+
+      # 3️⃣ Kies random verhaal uit pool
+      - name: Pick random story
+        id: pick
+        run: |
+          FILE=$(ls pool/*.html | shuf -n 1)
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+
+      # 4️⃣ Kopieer naar live-stories
+      - name: Copy to live-stories
+        run: |
+          cp "${{ steps.pick.outputs.file }}" live-stories/
+
+      # 5️⃣ Verwijder bestand uit pool
+      - name: Remove from pool
+        run: |
+          git rm "${{ steps.pick.outputs.file }}"
+
+      # 6️⃣ Commit en push
+      - name: Commit and Push
+        run: |
+          git add live-stories/
+          git commit -m "Auto publish random story: $(basename ${{ steps.pick.outputs.file }})"
+          git push origin main
