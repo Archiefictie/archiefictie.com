@@ -14,10 +14,10 @@
     }
     h1 {
       font-size: 32px;
-      margin-bottom: 0.4em;
+      margin-bottom: .4em;
     }
     .sub {
-      opacity: 0.6;
+      opacity: .6;
       margin-bottom: 2em;
       font-size: 18px;
     }
@@ -35,16 +35,9 @@
       text-decoration: underline;
     }
     footer {
-      opacity: 0.4;
+      opacity: .4;
       margin-top: 4em;
       font-size: 14px;
-    }
-    /* Translation toggle button styling */
-    #translation-toggle button {
-      margin-left: 5px;
-      padding: 4px 8px;
-      font-size: 14px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -53,61 +46,13 @@
 <h1>Welkom in het archief van dingen die ik waarschijnlijk niet echt heb meegemaakt.</h1>
 <p class="sub">Om geld te besparen op boekjes, pennen en puntenslijpers leek het mij verstandig om deze in te ruilen voor een digitaal kladblok.</p>
 
-<!-- Translation toggle -->
-<div id="translation-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
-  <button onclick="showOriginal()">NL</button>
-  <button onclick="showTranslated()">EN</button>
-</div>
-
 <h2>Archief</h2>
 <ul>
-  <!-- workflow voegt hier automatisch nieuwe verhalen bovenaan toe -->
+  <li><a href="2025-11-02-stomme-stalen-pony.html">Stomme stalen pony</a></li>
+  <!-- nieuwe verhalen voeg je *bovenaan* deze lijst toe -->
 </ul>
 
 <footer>© archiefictie.com</footer>
-
-<!-- Translation script (machine translate) -->
-<script>
-async function translateText(text) {
-    try {
-        const res = await fetch('https://libretranslate.de/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                q: text,
-                source: 'nl',
-                target: 'en',
-                format: 'text'
-            })
-        });
-        const data = await res.json();
-        return data.translatedText;
-    } catch(e) {
-        console.error('Vertaling mislukt', e);
-        return text;
-    }
-}
-
-async function showTranslated() {
-    document.querySelectorAll('.translatable').forEach(async el => {
-        if(!el.dataset.original) el.dataset.original = el.innerText;
-        const translated = await translateText(el.dataset.original);
-        el.innerText = translated;
-    });
-}
-
-function showOriginal() {
-    document.querySelectorAll('.translatable').forEach(el => {
-        if(el.dataset.original) el.innerText = el.dataset.original;
-    });
-}
-
-// Auto detect browser language
-const lang = navigator.language || navigator.userLanguage;
-if(lang.startsWith('en')) {
-    showTranslated();
-}
-</script>
 
 </body>
 </html>
