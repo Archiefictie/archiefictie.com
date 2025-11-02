@@ -37,25 +37,32 @@ jobs:
         run: |
           git rm "${{ steps.pick.outputs.file }}"
 
-      # 6️⃣ Update index.html (YAML-safe)
-      - name: Update index.html
+      # 6️⃣ Update index.html (rebuild + filter duplicaten)
+      - name: Rebuild index.html
         run: |
-          # Maak tijdelijke lijst van links
-          echo "" > tmp_links.html
+          TMP_FILE=$(mktemp)
+
+          # Maak tijdelijke lijst van unieke links
+          declare -A seen
+          echo "" > "$TMP_FILE"
+
           for f in live-stories/*.html; do
             NAME=$(basename "$f" .html)
-            echo "  <li><a href=\"$f\">$NAME</a></li>" >> tmp_links.html
+            if [ -z "${seen[$NAME]}" ]; then
+              echo "  <li><a href=\"$f\">$NAME</a></li>" >> "$TMP_FILE"
+              seen[$NAME]=1
+            fi
           done
 
-          # Vervang content tussen workflow comments
-          awk '
-            /<!-- workflow start -->/{print; system("cat tmp_links.html"); next}
-            /<!-- workflow end -->/{print; next}
+          # Plaats tussen workflow start/end in index.html
+          awk -v linksfile="$TMP_FILE" '
+            /<!-- workflow start -->/ {print; system("cat " linksfile); next}
+            /<!-- workflow end -->/ {print; next}
             !/<!-- workflow start -->/ && !/<!-- workflow end -->/ {print}
           ' index.html > index_new.html
 
           mv index_new.html index.html
-          rm tmp_links.html
+          rm "$TMP_FILE"
 
       # 7️⃣ Commit & Push
       - name: Commit & Push
