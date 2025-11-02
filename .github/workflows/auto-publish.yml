@@ -43,19 +43,19 @@ jobs:
           TMP_FILE=$(mktemp)
           declare -A seen
 
-          # Voeg bestaande links uit index.html toe aan 'seen'
-          grep -oP '(?<=href=")[^"]+' index.html | while read line; do
+          # Lees bestaande links uit index.html in dezelfde shell
+          while read -r line; do
               seen["$line"]=1
-          done
+          done < <(grep -oP '(?<=href=")[^"]+' index.html)
 
-          # Voeg nieuwe bestanden uit live-stories toe, alleen als nog niet in 'seen'
+          # Voeg nieuwe bestanden uit live-stories toe als nog niet in 'seen'
           for f in live-stories/*.html; do
-            FILEPATH=$(realpath --relative-to=. "$f")
-            if [ -z "${seen[$FILEPATH]}" ]; then
-              NAME=$(basename "$f" .html)
-              echo "  <li><a href=\"$FILEPATH\">$NAME</a></li>" >> "$TMP_FILE"
-              seen[$FILEPATH]=1
-            fi
+              FILEPATH=$(realpath --relative-to=. "$f")
+              if [ -z "${seen[$FILEPATH]}" ]; then
+                  NAME=$(basename "$f" .html)
+                  echo "  <li><a href=\"$FILEPATH\">$NAME</a></li>" >> "$TMP_FILE"
+                  seen[$FILEPATH]=1
+              fi
           done
 
           # Plaats links tussen workflow start/end in index.html
