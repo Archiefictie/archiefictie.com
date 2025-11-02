@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stomme stalen pony</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 650px;
+      margin: 40px auto;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 0.5em;
+    }
+    p.translatable {
+      margin-bottom: 1em;
+    }
+    #translation-toggle button {
+      margin-left: 5px;
+      padding: 4px 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Stomme stalen pony</h1>
+
+<div id="translation-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
+  <button onclick="showOriginal()">NL</button>
+  <button onclick="showTranslated()">EN</button>
+</div>
+
+<p class="translatable" data-nl="Hoe fijn is een fiets. Mijn stalen pony is nooit moe en klaagt niet over kou of de regen.">
+Hoe fijn is een fiets. Mijn stalen pony is nooit moe en klaagt niet over kou of de regen.
+</p>
+
+<p class="translatable" data-nl="Het is zeker geen jonge god, maar een fiets heeft het eeuwige leven.">
+Het is zeker geen jonge god, maar een fiets heeft het eeuwige leven.
+</p>
+
+<p class="translatable" data-nl="Hij ratelt en hij kraakt, maar voor een fiets is hij vrijwel volmaakt. Mijn voorlamp is te fel en schijnt in jouw ogen.">
+Hij ratelt en hij kraakt, maar voor een fiets is hij vrijwel volmaakt. Mijn voorlamp is te fel en schijnt in jouw ogen.
+</p>
+
+<p class="translatable" data-nl="Fiets, jij hebt mij meermaals bedrogen. Want, fijne fiets, op korte afstand kan jij niets.">
+Fiets, jij hebt mij meermaals bedrogen. Want, fijne fiets, op korte afstand kan jij niets.
+</p>
+
+<script>
+async function translateText(text) {
+    try {
+        const res = await fetch('https://libretranslate.de/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                q: text,
+                source: 'nl',
+                target: 'en',
+                format: 'text'
+            })
+        });
+        const data = await res.json();
+        return data.translatedText;
+    } catch(e) {
+        console.error('Vertaling mislukt', e);
+        return text;
+    }
+}
+
+async function showTranslated() {
+    document.querySelectorAll('.translatable').forEach(async el => {
+        if(!el.dataset.original) el.dataset.original = el.dataset.nl;
+        const translated = await translateText(el.dataset.original);
+        el.innerText = translated;
+    });
+}
+
+function showOriginal() {
+    document.querySelectorAll('.translatable').forEach(el => {
+        if(el.dataset.original) el.innerText = el.dataset.original;
+    });
+}
+
+// Auto detect browser
+const lang = navigator.language || navigator.userLanguage;
+if(lang.startsWith('en')) {
+    showTranslated();
+}
+</script>
+
+</body>
+</html>
