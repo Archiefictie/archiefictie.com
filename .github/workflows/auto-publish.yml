@@ -20,7 +20,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-      # 3️⃣ Kies random verhaal uit pool
+      # 3️⃣ Kies één random verhaal uit pool
       - name: Pick random story
         id: pick
         run: |
@@ -42,10 +42,14 @@ jobs:
         run: |
           TMP_FILE=$(mktemp)
           declare -A seen
-          echo "" > "$TMP_FILE"
 
+          # Voeg bestaande links uit index.html toe aan 'seen'
+          grep -oP '(?<=href=")[^"]+' index.html | while read line; do
+              seen["$line"]=1
+          done
+
+          # Voeg nieuwe bestanden uit live-stories toe, alleen als nog niet in 'seen'
           for f in live-stories/*.html; do
-            # Gebruik volledig relatief pad om duplicaten te voorkomen
             FILEPATH=$(realpath --relative-to=. "$f")
             if [ -z "${seen[$FILEPATH]}" ]; then
               NAME=$(basename "$f" .html)
@@ -54,7 +58,7 @@ jobs:
             fi
           done
 
-          # Plaats links tussen workflow comments
+          # Plaats links tussen workflow start/end in index.html
           awk -v linksfile="$TMP_FILE" '
             /<!-- workflow start -->/ {print; system("cat " linksfile); next}
             /<!-- workflow end -->/ {print; next}
