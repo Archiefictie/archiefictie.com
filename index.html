@@ -41,6 +41,29 @@
     }
   </style>
 </head>
+<div id="translation-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
+  <button onclick="showOriginal()">NL</button>
+  <button onclick="showTranslated()">EN</button>
+</div>
+
+<script>
+function showOriginal() {
+  document.querySelectorAll('.translatable').forEach(el => el.style.display = '');
+}
+function showTranslated() {
+  document.querySelectorAll('.translatable').forEach(el => {
+    const text = el.getAttribute('data-en');
+    if(text) el.innerText = text;
+  });
+}
+
+// auto detect browser
+const lang = navigator.language || navigator.userLanguage;
+if(lang.startsWith('en')) {
+  showTranslated();
+}
+</script>
+
 <body>
 
 <h1>Welkom in het archief van dingen die ik waarschijnlijk niet echt heb meegemaakt.</h1>
