@@ -37,31 +37,32 @@ jobs:
         run: |
           git rm "${{ steps.pick.outputs.file }}"
 
-      # 6️⃣ Update index.html (rebuild + filter duplicaten)
-      - - name: Rebuild index.html
-  run: |
-    TMP_FILE=$(mktemp)
-    declare -A seen
-    echo "" > "$TMP_FILE"
+      # 6️⃣ Rebuild index.html zonder duplicaten
+      - name: Rebuild index.html
+        run: |
+          TMP_FILE=$(mktemp)
+          declare -A seen
+          echo "" > "$TMP_FILE"
 
-    for f in live-stories/*.html; do
-      FILEPATH=$(realpath --relative-to=. "$f")
-      if [ -z "${seen[$FILEPATH]}" ]; then
-        NAME=$(basename "$f" .html)
-        echo "  <li><a href=\"$FILEPATH\">$NAME</a></li>" >> "$TMP_FILE"
-        seen[$FILEPATH]=1
-      fi
-    done
+          for f in live-stories/*.html; do
+            # Gebruik volledig relatief pad om duplicaten te voorkomen
+            FILEPATH=$(realpath --relative-to=. "$f")
+            if [ -z "${seen[$FILEPATH]}" ]; then
+              NAME=$(basename "$f" .html)
+              echo "  <li><a href=\"$FILEPATH\">$NAME</a></li>" >> "$TMP_FILE"
+              seen[$FILEPATH]=1
+            fi
+          done
 
-    # Plaats tussen workflow start/end in index.html
-    awk -v linksfile="$TMP_FILE" '
-      /<!-- workflow start -->/ {print; system("cat " linksfile); next}
-      /<!-- workflow end -->/ {print; next}
-      !/<!-- workflow start -->/ && !/<!-- workflow end -->/ {print}
-    ' index.html > index_new.html
+          # Plaats links tussen workflow comments
+          awk -v linksfile="$TMP_FILE" '
+            /<!-- workflow start -->/ {print; system("cat " linksfile); next}
+            /<!-- workflow end -->/ {print; next}
+            !/<!-- workflow start -->/ && !/<!-- workflow end -->/ {print}
+          ' index.html > index_new.html
 
-    mv index_new.html index.html
-    rm "$TMP_FILE"
+          mv index_new.html index.html
+          rm "$TMP_FILE"
 
       # 7️⃣ Commit & Push
       - name: Commit & Push
